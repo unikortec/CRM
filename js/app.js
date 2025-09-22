@@ -1,48 +1,60 @@
-import { gerarPDF } from './pdf.js';
-import { toastOk } from './ui.js';
-import { renderItens, adicionarItem } from './itens.js';
+// js/app.js
+import { initItens, adicionarItem, atualizarFreteAoEditarItem } from './itens.js';
 import { atualizarFreteUI } from './frete.js';
+import { gerarPDF } from './pdf.js';
+
+// UI simples: mostra/oculta campo "pagamentoOutro"
+function wirePagamentoOutro(){
+  const sel = document.getElementById('pagamento');
+  const outro = document.getElementById('pagamentoOutro');
+  if (!sel || !outro) return;
+  const sync = () => { outro.style.display = (sel.value === 'OUTRO') ? '' : 'none'; };
+  sel.addEventListener('change', sync);
+  sync();
+}
+
+// Banner offline
+function updateOfflineBanner(){
+  const el = document.getElementById('offlineBanner');
+  if (!el) return;
+  el.style.display = navigator.onLine ? 'none' : 'block';
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-  // render inicial dos itens (começa com 1 linha)
-  renderItens();
+  // itens (render inicial e listeners internos)
+  initItens();
 
-  // botão "Adicionar Item"
+  // botão adicionar item
   const addBtn = document.getElementById('adicionarItemBtn');
-  if (addBtn) {
+  if (addBtn){
     addBtn.addEventListener('click', () => {
       adicionarItem();
-      toastOk('Item adicionado');
+      atualizarFreteUI(); // recalcula frete após inserir item
     });
   }
 
-  // botões de PDF (usar IDs do HTML)
-  const btnGerar = document.getElementById('btnGerarPdf');
-  const btnSalvar = document.getElementById('btnSalvarPdf');
-  const btnCompartilhar = document.getElementById('btnCompartilharPdf');
+  // mudanças nos inputs que afetam frete
+  const end = document.getElementById('endereco');
+  const chkIsentar = document.getElementById('isentarFrete');
+  end && end.addEventListener('blur', atualizarFreteUI);
+  chkIsentar && chkIsentar.addEventListener('change', atualizarFreteUI);
 
-  if (btnGerar) btnGerar.addEventListener('click', (ev) => gerarPDF(false, ev.target));
-  if (btnSalvar) btnSalvar.addEventListener('click', (ev) => gerarPDF(true, ev.target));
-  if (btnCompartilhar) {
-    btnCompartilhar.addEventListener('click', async () => {
-      if (window.compartilharPDF) await window.compartilharPDF();
-      else alert('Função de compartilhar não está disponível.');
-    });
-  }
+  // quando itens mudam (quantidade/preço/produto), recalcula frete
+  atualizarFreteAoEditarItem((/* index */) => atualizarFreteUI());
 
-  // mostrar/ocultar "pagamentoOutro"
-  const selPagto = document.getElementById('pagamento');
-  const pagtoOutro = document.getElementById('pagamentoOutro');
-  if (selPagto && pagtoOutro) {
-    selPagto.addEventListener('change', () => {
-      pagtoOutro.style.display = selPagto.value === 'OUTRO' ? '' : 'none';
-    });
-  }
+  // pagamento outro
+  wirePagamentoOutro();
 
-  // recalcula frete ao marcar isenção manual
-  const isentar = document.getElementById('isentarFrete');
-  if (isentar) isentar.addEventListener('change', atualizarFreteUI);
+  // PDF buttons
+  const g = document.getElementById('btnGerarPdf');
+  const s = document.getElementById('btnSalvarPdf');
+  const c = document.getElementById('btnCompartilharPdf');
+  g && g.addEventListener('click', (ev) => gerarPDF(false, ev.target));
+  s && s.addEventListener('click', (ev) => gerarPDF(true,  ev.target));
+  c && c.addEventListener('click', async () => gerarPDF('share')); // se sua implementação usa share
 
-  // atualização inicial do frete (se tiver dados)
-  atualizarFreteUI();
+  // offline banner
+  updateOfflineBanner();
+  window.addEventListener('online', updateOfflineBanner);
+  window.addEventListener('offline', updateOfflineBanner);
 });
