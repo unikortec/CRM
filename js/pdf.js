@@ -1,10 +1,25 @@
-// js/pdf.js — usa jsPDF do CDN via window.jspdf (sem import "jspdf")
+// js/pdf.js — usa jsPDF do CDN via window.jspdf e NÃO importa frete.js (evita quebra)
+const { jsPDF } = window.jspdf;
 
-import { digitsOnly } from './utils.js';
-import { getItens, getSubtotal } from './itens.js';
-import { ensureFreteBeforePDF, getFreteAtual } from './frete.js';
-
-const { jsPDF } = window.jspdf; // ✅ pega do script CDN já incluído no index.html
+// ------- Wrappers para o frete (não quebram se frete.js mudar) -------
+async function ensureFreteBeforePDFWrapper() {
+  // se existir uma função global dedicada
+  if (typeof window.ensureFreteBeforePDF === 'function') {
+    try { return await window.ensureFreteBeforePDF(); } catch {}
+  }
+  // fallback: se houver um atualizarFreteUI síncrono, chamamos antes de ler o estado
+  if (typeof window.atualizarFreteUI === 'function') {
+    try { await window.atualizarFreteUI(); } catch {}
+  }
+  return null;
+}
+function getFreteAtualWrapper() {
+  // seu frete.js costuma guardar em __frete/__freteSugestao
+  const f = window.__frete || null;
+  if (f) return f;
+  const sug = (typeof window.__freteSugestao === 'number') ? window.__freteSugestao : 0;
+  return { valorBase: sug || 0, valorCobravel: sug || 0, isento: false, labelIsencao: '' };
+}
 
 // ---------- Helpers de nome do arquivo ----------
 function twoFirstNamesCamel(client) {
@@ -26,7 +41,8 @@ function nomeArquivoPedido(cliente, entregaISO, horaEntrega) {
   return `${base}_${dia || 'DD'}_${mes || 'MM'}_${aa}_${hh}-${mm}.pdf`;
 }
 
-// ---------- Utilidades PDF ----------
+// ---------- Utilidades Gerais ----------
+function digitsOnly(v){ return String(v||"").replace(/\D/g,""); }
 function formatarData(iso) {
   if (!iso) return '';
   const [a, m, d] = iso.split('-');
@@ -38,7 +54,30 @@ function diaDaSemanaExtenso(iso) {
   return d.toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase();
 }
 
-// ---------- Montagem PDF ----------
+// ========= API leve para pegar itens da UI (sem depender de itens.js) =========
+function lerItensDaTela() {
+  // Se seu itens.js expõe algo em window, use; senão lemos do DOM.
+  if (typeof window.getItens === 'function') return window.getItens();
+
+  const blocks = document.querySelectorAll('#itens .item');
+  const out = [];
+  blocks.forEach((el) => {
+    const produto = el.querySelector('.produto')?.value || '';
+    const tipo = el.querySelector('.tipo')?.value || 'KG';
+    const quantidade = parseFloat(el.querySelector('.quantidade')?.value || '0') || 0;
+    const preco = parseFloat(el.querySelector('.preco')?.value || '0') || 0;
+    const obs = el.querySelector('.obsItem')?.value || '';
+    const pesoTotalKg = parseFloat(el.getAttribute('data-peso-total-kg') || '0') || 0;
+
+    let total = quantidade * preco;
+    if (tipo === 'UN' && pesoTotalKg > 0) total = pesoTotalKg * preco;
+
+    out.push({ produto, tipo, quantidade, preco, obs, total, _pesoTotalKg: pesoTotalKg });
+  });
+  return out.length ? out : [{ produto:'', tipo:'KG', quantidade:0, preco:0, obs:'', total:0 }];
+}
+
+// ======================= MONTAGEM PDF =======================
 export async function montarPDF(querSalvarNoBanco) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [72, 297] });
 
@@ -48,11 +87,11 @@ export async function montarPDF(querSalvarNoBanco) {
     if (y + h > SAFE_BOTTOM) { doc.addPage([72, 297], 'portrait'); y = 10; }
   }
 
-  // LOGO (se existir local)
+  // LOGO (se existir local; não quebra se 404)
   try {
     const img = new Image();
     img.src = 'Serra-Nobre_3.png';
-    await new Promise((res, rej) => { img.onload = res; img.onerror = res; }); // não quebra se 404
+    await new Promise((res) => { img.onload = res; img.onerror = res; });
     if (img.complete && img.naturalWidth) {
       doc.addImage(img, 'PNG', 20, y, 32, 12, '', 'FAST');
       if (window.__usuario?.nome) {
@@ -99,7 +138,7 @@ export async function montarPDF(querSalvarNoBanco) {
   doc.text(ie, margemX + halfW + gap1 + halfW / 2, y + 8, { align: 'center' });
   y += 11;
 
-  // ENDEREÇO (quebra automática dentro da borda) ✅
+  // ENDEREÇO (quebra automática dentro da borda)
   const pad = 3;
   const innerW = larguraCaixa - pad * 2;
   const linhasEnd = doc.splitTextToSize(endereco, innerW);
@@ -163,7 +202,7 @@ export async function montarPDF(querSalvarNoBanco) {
 
   let subtotal = 0;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  const itens = getItens();
+  const itens = lerItensDaTela();
 
   for (let i = 0; i < itens.length; i++) {
     const it = itens[i];
@@ -237,8 +276,8 @@ export async function montarPDF(querSalvarNoBanco) {
   y += 12;
 
   // ENTREGA/RETIRADA + FRETE
-  await ensureFreteBeforePDF(); // calcula frete antes de imprimir
-  const frete = getFreteAtual(); // {valorBase, valorCobravel, isento, ...}
+  await ensureFreteBeforePDFWrapper();
+  const frete = getFreteAtualWrapper();
   const gap2 = 2;
   const entregaW = Math.round(larguraCaixa * (2 / 3));
   const freteW = larguraCaixa - entregaW - gap2;
@@ -284,34 +323,28 @@ export async function montarPDF(querSalvarNoBanco) {
     y += h + 3;
   }
 
-  // Nome final do arquivo (sem “Pedido_”, com hora de entrega) ✅
   const nomeArquivo = nomeArquivoPedido(cliente, entregaISO, hora);
-
   return { doc, nomeArquivo };
 }
 
-// ---------- Ações públicas ----------
+// ========= Ação principal =========
 export async function gerarPDF(apenasSalvar = false, btnRef) {
   if (!window.__usuario) { alert('Faça login para continuar.'); return; }
-
-  if (window.__busy) return;
-  window.__busy = true;
-
+  if (window.__busy) return; window.__busy = true;
   try {
     if (btnRef) { btnRef.disabled = true; btnRef.textContent = apenasSalvar ? 'Salvando...' : 'Gerando...'; }
 
-    // valida mínimos: cliente, endereço, data/hora e 1 item com quantidade e preço
+    // valida mínimos
     const okCampos = document.getElementById('cliente').value.trim()
       && document.getElementById('endereco').value.trim()
       && document.getElementById('entrega').value
       && document.getElementById('horaEntrega').value
-      && getItens().some(i => (i.quantidade > 0) && (i.preco > 0));
+      && lerItensDaTela().some(i => (i.quantidade > 0) && (i.preco > 0));
     if (!okCampos) { alert('Preencha Cliente, Endereço, Data, Horário e ao menos 1 item com quantidade e preço.'); return; }
 
-    const { doc, nomeArquivo } = await montarPDF(apenasSalvar /* salva no banco fica a teu critério */);
-    if (apenasSalvar) {
-      doc.save(nomeArquivo);
-    } else {
+    const { doc, nomeArquivo } = await montarPDF(apenasSalvar);
+    if (apenasSalvar) doc.save(nomeArquivo);
+    else {
       const url = doc.output('bloburl');
       const win = window.open(url, '_blank');
       if (!win) doc.save(nomeArquivo);
@@ -322,7 +355,7 @@ export async function gerarPDF(apenasSalvar = false, btnRef) {
   }
 }
 
-// (opcional) compartilhar via Web Share API
+// (opcional) compartilhar
 window.compartilharPDF = async function () {
   const { doc, nomeArquivo } = await montarPDF(true);
   const blob = await doc.output('blob');
