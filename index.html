@@ -3,41 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <title>Serra Nobre – Pedidos</title>
-  <meta name="theme-color" content="#0ea5a6" />
-  <meta name="description" content="Pedido rápido com PDF, histórico por cliente e PWA offline." />
 
+  <meta name="theme-color" content="#1e7f46" />
+  <meta name="description" content="Pedido rápido com PDF, histórico por cliente e PWA offline." />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
 
-  <!-- CSS externo -->
   <link rel="stylesheet" href="css/style.css" />
 </head>
-
 <body>
-  <!-- TOPO: Logo + usuário -->
+  <!-- BARRA DE BRAND (verde) -->
+  <div class="brandbar"></div>
+
+  <!-- TOPO: Logo + espaço para 'usuário' (placeholder) -->
   <div class="topbar">
-    <img src="Serra-Nobre_3.png" alt="Logo da Serra Nobre" class="logo-header" onerror="this.style.display='none'">
-    <div class="user-area">
-      <span id="userChip" class="user-chip">Desconectado</span>
-      <button id="btnSair" style="display:none">Sair</button>
-      <div id="loginInline" class="login-inline" title="Digite a senha do operador">
-        <input id="senhaOperador" type="password" inputmode="numeric" placeholder="Senha do operador"/>
-        <button id="btnEntrarOperador" type="button">Entrar</button>
-      </div>
+    <img src="Serra-Nobre_3.png" alt="Logo Serra Nobre" class="logo-header" onerror="this.style.display='none'">
+    <div class="user-slot" title="Espaço reservado para nome do usuário">
+      <span id="userDisplayName" class="user-name muted">Usuário</span>
     </div>
   </div>
 
-  <div id="offlineBanner" class="offline-banner">OFFLINE — pedidos serão gerados normalmente, mas não serão salvos.</div>
-  <h1>PEDIDOS</h1>
+  <!-- Link “caixa” para Relatórios -->
+  <div class="top-actions">
+    <a class="pill-link" href="/relatorios.html" title="Abrir Relatórios">Relatórios</a>
+  </div>
+
+  <!-- Título alinhado aos campos -->
+  <h1 class="page-title">PEDIDOS V1.0.1</h1>
 
   <main id="appMain">
-    <div class="top-actions">
-      <a href="/relatorios.html" title="Abrir Relatórios">Relatórios</a>
-    </div>
-
     <div class="field-group">
       <label for="cliente">Cliente:</label>
       <input list="listaClientes" type="text" id="cliente" autocomplete="off" required />
@@ -97,7 +93,9 @@
       <label>Valor do Frete:</label>
       <div class="frete-row">
         <div id="freteValor" class="muted">—</div>
-        <label class="inline"><input type="checkbox" id="isentarFrete"/> Isentar frete</label>
+        <label class="inline">
+          <input type="checkbox" id="isentarFrete"/> Isentar frete
+        </label>
       </div>
     </div>
 
@@ -129,43 +127,17 @@
   <!-- jsPDF (CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Módulos do app -->
+  <!-- Módulos do app (ordem importa) -->
   <script type="module" src="js/firebase.js"></script>
   <script type="module" src="js/utils.js"></script>
   <script type="module" src="js/ui.js"></script>
   <script type="module" src="js/clientes.js"></script>
+  <script type="module" src="js/itens.js"></script>
   <script type="module" src="js/frete.js"></script>
-  <script type="module" src="js/itens.js"></script>  <!-- ✅ ADICIONADO -->
   <script type="module" src="js/pdf.js"></script>
   <script type="module" src="js/app.js"></script>
 
-  <!-- SW registration simples (pode mover para app.js se preferir) -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-          document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') reg.update();
-          });
-          setInterval(() => reg.update(), 10 * 60 * 1000);
-          reg.addEventListener('updatefound', () => {
-            const nw = reg.installing;
-            nw && nw.addEventListener('statechange', () => {
-              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                reg.waiting && reg.waiting.postMessage('SKIP_WAITING');
-              }
-            });
-          });
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!window.__reloadedBySW) { window.__reloadedBySW = true; location.reload(); }
-          });
-        } catch {}
-      });
-    }
-  </script>
-
-  <!-- datalist para produtos (preenchido via JS) -->
+  <!-- datalist de produtos -->
   <datalist id="listaProdutos"></datalist>
 </body>
 </html>
