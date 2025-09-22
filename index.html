@@ -20,23 +20,19 @@
   <!-- HEADER -->
   <header class="hero">
     <div class="hero-inner">
-      <!-- ESQUERDA: logo + versão (versão agora abaixo do logo) -->
+      <!-- LOGO maior -->
       <div class="hero-left">
-        <img class="hero-logo" src="unikorbranco-logo.svg" alt="UNIKOR" />
-        <div class="app-version">PEDIDOS V1.0.1</div>
+        <img class="hero-logo big" src="unikorbranco-logo.svg" alt="UNIKOR" />
       </div>
 
-      <!-- DIREITA: relatórios + usuário (usuário abaixo no mobile) -->
+      <!-- DIREITA: botão relatórios (abre no link externo na mesma aba) -->
       <div class="hero-right">
-        <a class="btn-report" href="/relatorios.html" title="Abrir Relatórios">Relatórios</a>
-        <div class="user-label" aria-label="Usuário atual">USUÁRIO</div>
+        <a class="btn-report" href="https://relatorios-seven.vercel.app/">Relatórios</a>
       </div>
     </div>
   </header>
 
   <div id="offlineBanner" class="offline-banner">OFFLINE — pedidos serão gerados normalmente, mas não serão salvos.</div>
-
-  <!-- REMOVIDO o h1 e o link “Relatórios” dentro do main para não duplicar -->
 
   <main id="appMain">
     <div class="field-group">
@@ -130,7 +126,7 @@
   <!-- jsPDF (CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Módulos do app (inalterados) -->
+  <!-- Módulos do app -->
   <script type="module" src="js/firebase.js"></script>
   <script type="module" src="js/utils.js"></script>
   <script type="module" src="js/ui.js"></script>
@@ -165,7 +161,6 @@
     }
   </script>
 
-  <!-- datalist para produtos -->
   <datalist id="listaProdutos"></datalist>
 </body>
 </html>
