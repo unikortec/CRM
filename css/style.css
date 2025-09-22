@@ -1,7 +1,9 @@
 :root{
+  /* Paleta Unikor */
   --brand: #1e7f46;
   --brand-600: #166c3a;
 
+  /* Neutros */
   --ink:   #0f172a;
   --muted: #64748b;
   --bg:    #f1f5f9;
@@ -24,13 +26,13 @@ body{
    HEADER / HERO
    ========================= */
 .hero{
-  background:#1e7f46;
+  background:var(--brand);
   color:#fff;
 }
 .hero-inner{
   max-width:1200px;
   margin:0 auto;
-  padding:16px 16px;
+  padding:16px 16px 12px;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -38,11 +40,12 @@ body{
 }
 .hero-left{
   display:flex;
-  align-items:center;
-  gap:14px;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
 }
 .hero-logo{
-  height:42px;
+  height:38px;
   width:auto;
   display:block;
 }
@@ -50,15 +53,17 @@ body{
   font-weight:700;
   letter-spacing:.02em;
   opacity:.95;
+  font-size:14px;
 }
 .hero-right{
   display:flex;
-  align-items:center;
-  gap:12px;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
 }
 .btn-report{
   background:#fff;
-  color:#1e7f46;
+  color:var(--brand);
   font-weight:700;
   text-decoration:none;
   padding:10px 18px;
@@ -73,60 +78,55 @@ body{
 .user-label{
   font-weight:700;
   opacity:.9;
-  padding:0 10px;
-  border-left:2px solid rgba(255,255,255,.35);
+  font-size:12px;
 }
 
+/* Espaço abaixo do cabeçalho para o conteúdo respirar */
+#appMain{ max-width: 1100px; margin: 14px auto 40px; padding: 0 12px; }
+
 /* =========================
-   MOBILE ajustado
+   MOBILE
    ========================= */
 @media (max-width: 560px){
   .hero-inner{
-    padding:14px 12px;
+    padding:14px 12px 10px;
     gap:10px;
   }
-  .hero-left{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:6px;
-  }
-  .hero-logo{
-    height:30px;
-  }
-  .app-version{
-    font-size:12px;
-    line-height:1;
-    margin-left:2px;
-    opacity:.95;
-  }
-  .hero-right{
-    flex-direction:column;
-    align-items:flex-end;
-    gap:6px;
-  }
-  .btn-report{
-    padding:8px 14px;
-    font-size:14px;
-  }
-  .user-label{
-    font-size:12px;
-    line-height:1;
-    padding:0;
-    border:0;
-    opacity:.9;
-  }
+  .hero-logo{ height:28px; }
+  .app-version{ font-size:12px; }
+  .btn-report{ padding:8px 14px; font-size:14px; }
+  .user-label{ font-size:12px; }
+  #appMain{ margin-top: 10px; }
 }
 
 /* =========================
-   RESTANTE DO SEU CSS (formulário, botões, etc.)
+   RESTANTE DO SEU CSS (inalterado)
    ========================= */
-.offline-banner{ background:#fbbf24; color:#000; text-align:center; padding:6px; font-size:14px }
+.offline-banner{
+  background:#fbbf24; color:#000; text-align:center; padding:6px; font-size:14px
+}
+
 .field-group{ margin-bottom:12px }
 .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+@media (max-width: 740px){ .grid-2{ grid-template-columns:1fr } }
+
 .switch-box{ display:flex; align-items:center; gap:8px }
 .frete-row{ display:flex; align-items:center; gap:12px }
 .muted{ color:var(--muted); font-size:12px }
 .inline-help{ font-size:11px; color:var(--muted) }
-.pdf-btn{ background:#0ea5a6; color:#fff; border:none; padding:10px 14px; border-radius:8px; margin:4px; cursor:pointer }
-.pdf-btn.salvar{ background:#1e7f46 }
+
+input, select, textarea{
+  width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; outline:0; background:#fff
+}
+
+button{
+  width:100%; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font:inherit
+}
+
+.pdf-btn{ background:#0ea5a6; color:#fff; margin:4px 0 }
+.pdf-btn.salvar{ background:var(--brand) }
 .pdf-btn.compartilhar{ background:#475569 }
+
+/* bloco de itens (renderizado pelo JS) */
+.item{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:10px; margin-bottom:10px }
+.total{ font-weight:700; font-size:1.05rem }
