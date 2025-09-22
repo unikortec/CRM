@@ -3,7 +3,7 @@ import { initItens, adicionarItem, atualizarFreteAoEditarItem } from './itens.js
 import { atualizarFreteUI } from './frete.js';
 import { gerarPDF } from './pdf.js';
 
-// UI simples: mostra/oculta campo "pagamentoOutro"
+// UI: mostra/oculta campo "pagamentoOutro"
 function wirePagamentoOutro(){
   const sel = document.getElementById('pagamento');
   const outro = document.getElementById('pagamentoOutro');
@@ -21,7 +21,7 @@ function updateOfflineBanner(){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // itens (render inicial e listeners internos)
+  // Render inicial dos itens e listeners internos
   initItens();
 
   // botão adicionar item
@@ -29,29 +29,29 @@ document.addEventListener('DOMContentLoaded', () => {
   if (addBtn){
     addBtn.addEventListener('click', () => {
       adicionarItem();
-      atualizarFreteUI(); // recalcula frete após inserir item
+      atualizarFreteUI();
     });
   }
 
-  // mudanças nos inputs que afetam frete
+  // eventos que impactam o frete
   const end = document.getElementById('endereco');
   const chkIsentar = document.getElementById('isentarFrete');
   end && end.addEventListener('blur', atualizarFreteUI);
   chkIsentar && chkIsentar.addEventListener('change', atualizarFreteUI);
 
-  // quando itens mudam (quantidade/preço/produto), recalcula frete
-  atualizarFreteAoEditarItem((/* index */) => atualizarFreteUI());
+  // Quando qualquer item muda (qtd/preço/produto), recalcular frete
+  atualizarFreteAoEditarItem(() => atualizarFreteUI());
 
   // pagamento outro
   wirePagamentoOutro();
 
-  // PDF buttons
+  // Botões PDF
   const g = document.getElementById('btnGerarPdf');
   const s = document.getElementById('btnSalvarPdf');
   const c = document.getElementById('btnCompartilharPdf');
   g && g.addEventListener('click', (ev) => gerarPDF(false, ev.target));
   s && s.addEventListener('click', (ev) => gerarPDF(true,  ev.target));
-  c && c.addEventListener('click', async () => gerarPDF('share')); // se sua implementação usa share
+  c && c.addEventListener('click', async () => gerarPDF('share'));
 
   // offline banner
   updateOfflineBanner();
