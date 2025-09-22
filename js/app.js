@@ -1,7 +1,34 @@
 // js/app.js
 import { initItens, adicionarItem, atualizarFreteAoEditarItem } from './itens.js';
 import { atualizarFreteUI } from './frete.js';
-import { gerarPDF } from './pdf.js';
+
+// Carrega o módulo do PDF só quando necessário e com fallback de diferentes tipos de export
+async function callGerarPDF(mode, btn) {
+  try {
+    const m = await import('./pdf.js');
+
+    // Tenta achar a função gerarPDF em diferentes formatos de export
+    let fn = null;
+    if (typeof m.gerarPDF === 'function') {
+      fn = m.gerarPDF;
+    } else if (typeof m.default === 'function') {
+      fn = m.default;
+    } else if (m.default && typeof m.default.gerarPDF === 'function') {
+      fn = m.default.gerarPDF;
+    }
+
+    if (!fn) {
+      console.error('[PDF] Módulo carregado, mas a função gerarPDF não foi encontrada.', m);
+      alert('Módulo de PDF indisponível no momento. Verifique o arquivo js/pdf.js.');
+      return;
+    }
+
+    await fn(mode, btn);
+  } catch (err) {
+    console.error('[PDF] Falha ao carregar módulo:', err);
+    alert('Não consegui carregar o módulo de PDF. Tente recarregar a página.');
+  }
+}
 
 // UI: mostra/oculta campo "pagamentoOutro"
 function wirePagamentoOutro(){
@@ -45,13 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // pagamento outro
   wirePagamentoOutro();
 
-  // Botões PDF
+  // Botões PDF (usando o import dinâmico protegido)
   const g = document.getElementById('btnGerarPdf');
   const s = document.getElementById('btnSalvarPdf');
   const c = document.getElementById('btnCompartilharPdf');
-  g && g.addEventListener('click', (ev) => gerarPDF(false, ev.target));
-  s && s.addEventListener('click', (ev) => gerarPDF(true,  ev.target));
-  c && c.addEventListener('click', async () => gerarPDF('share'));
+  g && g.addEventListener('click', (ev) => callGerarPDF(false, ev.target));
+  s && s.addEventListener('click', (ev) => callGerarPDF(true,  ev.target));
+  c && c.addEventListener('click', async () => callGerarPDF('share'));
 
   // offline banner
   updateOfflineBanner();
