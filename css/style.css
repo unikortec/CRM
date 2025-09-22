@@ -1,0 +1,71 @@
+:root{
+  --teal:#0ea5a6; --ink:#0f172a; --muted:#666; --bg:#f4f4f4; --line:#e2e8f0;
+  --ok:#3d7311; --accent:#005580; --warn:#b06912; --danger:#c0392b; --primary:#008000;
+}
+*{ box-sizing:border-box }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 10px; background: var(--bg); color:var(--ink) }
+h1 { margin: 6px 0 10px; font-size: 30px; }
+.logo-header { width: 360px; display: block; }
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-bottom:8px;
+}
+.user-area { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.user-chip { padding:6px 10px; border:1px dashed #94a3b8; border-radius:999px; background:#f8fafc; font-size:12px; color:#0f172a; }
+.login-inline { display:flex; align-items:center; gap:6px; }
+.login-inline input { padding:6px 8px; border:1px solid var(--line); border-radius:6px; width:140px; }
+.btn-primary { padding:6px 10px; background:var(--teal); color:#fff; border:none; border-radius:6px; cursor:pointer; }
+.btn-ghost{ padding:6px 10px; background:#475569; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+#btnSair:hover{ filter:brightness(.95) }
+
+.offline-banner{
+  display:none; text-align:center; margin:8px 0;
+  background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:8px; padding:6px 10px; font-weight:700;
+}
+
+input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border:1px solid var(--line); border-radius:6px; background:#fff }
+.item { border: 1px solid var(--line); padding: 10px; background: #fff; margin-bottom: 10px; border-radius:8px; }
+.total { font-weight: bold; font-size: 1.2em; }
+button { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; font-size: 1em; margin-top: 5px; border-radius: 6px; cursor:pointer; }
+.remove { background: var(--danger); }
+.pdf-btn { background: var(--accent); margin-top: 10px; }
+.pdf-btn.salvar { background: var(--ok); }
+.pdf-btn.compartilhar { background: var(--warn); }
+.tipo-select { width: auto; margin-right: 10px; }
+label { font-weight: bold; }
+.field-group { margin-bottom: 12px; }
+.switch-box { display: flex; gap: 20px; justify-content: left; align-items: center; margin-bottom: 12px; }
+#pagamentoOutro { margin-top: 6px; }
+.top-actions { display:flex; gap:8px; margin:6px 0 10px; }
+.top-actions a { background:var(--teal); color:#fff; text-decoration:none; padding:8px 10px; border-radius:8px; font-weight:600; }
+.muted{ color:var(--muted); font-size:0.9em }
+#freteValor { font-weight: bold; }
+.frete-row { display:flex; align-items:center; gap:10px; flex-wrap: wrap; }
+.frete-row .inline { display:flex; align-items:center; gap:6px; }
+.grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px }
+.inline-help{ font-size:12px; color:#475569 }
+.peso-info { font-size:12px; color:#475569; margin:.25rem 0 .5rem }
+
+.app-disabled *:where(input,select,textarea,button,.pdf-btn){ pointer-events:none; opacity:.6 }
+.app-disabled .login-inline, .app-disabled #userChip { pointer-events:auto; opacity:1 }
+
+#toastBox { position: fixed; top: 12px; right: 12px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: #111; color: #fff; padding: 10px 14px; border-radius: 10px; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
+.toast.ok { background: #126e29; }
+.toast.warn { background: #b06912; }
+.toast.err { background: #b91c1c; }
+
+.sr-only { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 900px) { .logo-header{ width:240px } }
+@media (max-width: 740px) { .grid-2{ grid-template-columns: 1fr } .logo-header{ width:180px } }
+@media (max-width: 450px) {
+  h1 { font-size: 1.1em; }
+  .logo-header { width: 110px; }
+  .item { padding: 6px; }
+  button, .pdf-btn { padding: 7px; font-size: 0.96em; }
+  input, select, textarea { padding: 6px; }
+  .field-group { margin-bottom: 8px; }
+  .top-actions a { padding:6px 8px; font-size:0.9em; }
+  .login-inline input{ width:110px }
+}
