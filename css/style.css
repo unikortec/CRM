@@ -1,9 +1,7 @@
 :root{
-  /* Paleta Unikor */
   --brand: #1e7f46;
   --brand-600: #166c3a;
 
-  /* Neutros */
   --ink:   #0f172a;
   --muted: #64748b;
   --bg:    #f1f5f9;
@@ -14,7 +12,6 @@
 }
 
 *{ box-sizing:border-box }
-html,body{ height:100% }
 body{
   margin:0;
   font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
@@ -22,9 +19,7 @@ body{
   color:var(--ink);
 }
 
-/* =========================
-   HEADER / HERO
-   ========================= */
+/* HEADER */
 .hero{
   background:var(--brand);
   color:#fff;
@@ -32,34 +27,15 @@ body{
 .hero-inner{
   max-width:1200px;
   margin:0 auto;
-  padding:16px 16px 12px;
+  padding:16px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:16px;
 }
-.hero-left{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:6px;
-}
-.hero-logo{
-  height:38px;
+.hero-logo.big{
+  height:50px;
   width:auto;
   display:block;
-}
-.app-version{
-  font-weight:700;
-  letter-spacing:.02em;
-  opacity:.95;
-  font-size:14px;
-}
-.hero-right{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:8px;
 }
 .btn-report{
   background:#fff;
@@ -75,37 +51,21 @@ body{
   box-shadow:0 1px 0 rgba(0,0,0,.06);
 }
 .btn-report:active{ transform:translateY(1px); }
-.user-label{
-  font-weight:700;
-  opacity:.9;
-  font-size:12px;
-}
 
-/* Espaço abaixo do cabeçalho para o conteúdo respirar */
+/* MAIN */
 #appMain{ max-width: 1100px; margin: 14px auto 40px; padding: 0 12px; }
 
-/* =========================
-   MOBILE
-   ========================= */
+/* MOBILE */
 @media (max-width: 560px){
-  .hero-inner{
-    padding:14px 12px 10px;
-    gap:10px;
-  }
-  .hero-logo{ height:28px; }
-  .app-version{ font-size:12px; }
+  .hero-inner{ padding:14px 12px; }
+  .hero-logo.big{ height:40px; }
   .btn-report{ padding:8px 14px; font-size:14px; }
-  .user-label{ font-size:12px; }
-  #appMain{ margin-top: 10px; }
 }
 
-/* =========================
-   RESTANTE DO SEU CSS (inalterado)
-   ========================= */
-.offline-banner{
-  background:#fbbf24; color:#000; text-align:center; padding:6px; font-size:14px
-}
+/* Banners */
+.offline-banner{ background:#fbbf24; color:#000; text-align:center; padding:6px; font-size:14px }
 
+/* FORM */
 .field-group{ margin-bottom:12px }
 .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
 @media (max-width: 740px){ .grid-2{ grid-template-columns:1fr } }
@@ -127,6 +87,5 @@ button{
 .pdf-btn.salvar{ background:var(--brand) }
 .pdf-btn.compartilhar{ background:#475569 }
 
-/* bloco de itens (renderizado pelo JS) */
 .item{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:10px; margin-bottom:10px }
 .total{ font-weight:700; font-size:1.05rem }
