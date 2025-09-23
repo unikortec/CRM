@@ -33,7 +33,7 @@ body{
   justify-content:space-between;
 }
 .hero-logo.big{
-  height:50px;
+  height:80px;
   width:auto;
   display:block;
 }
@@ -58,7 +58,7 @@ body{
 /* MOBILE */
 @media (max-width: 560px){
   .hero-inner{ padding:14px 12px; }
-  .hero-logo.big{ height:40px; }
+  .hero-logo.big{ height:60px; }
   .btn-report{ padding:8px 14px; font-size:14px; }
 }
 
