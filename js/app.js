@@ -1,87 +1,51 @@
-// js/app.js
-import { initItens, adicionarItem, atualizarFreteAoEditarItem } from './itens.js';
-import { atualizarFreteUI } from './frete.js';
+import { requireAdmin } from './guard.js';
+import { doLogout } from './auth.js';
+import viewDashboard from './views/dashboard.js';
+import viewClientes from './views/clientes.js';
+import viewPedidos from './views/pedidos.js';
+import viewDespesas from './views/despesas.js';
+import viewOFX from './views/ofx.js';
 
-// Carrega o módulo do PDF só quando necessário e com fallback de diferentes tipos de export
-async function callGerarPDF(mode, btn) {
-  try {
-    const m = await import('./pdf.js');
+const routes = {
+  dashboard: viewDashboard,
+  clientes:  viewClientes,
+  pedidos:   viewPedidos,
+  despesas:  viewDespesas,
+  ofx:       viewOFX
+};
 
-    // Tenta achar a função gerarPDF em diferentes formatos de export
-    let fn = null;
-    if (typeof m.gerarPDF === 'function') {
-      fn = m.gerarPDF;
-    } else if (typeof m.default === 'function') {
-      fn = m.default;
-    } else if (m.default && typeof m.default.gerarPDF === 'function') {
-      fn = m.default.gerarPDF;
-    }
+document.getElementById('logoutBtn')?.addEventListener('click', ()=> doLogout());
 
-    if (!fn) {
-      console.error('[PDF] Módulo carregado, mas a função gerarPDF não foi encontrada.', m);
-      alert('Módulo de PDF indisponível no momento. Verifique o arquivo js/pdf.js.');
-      return;
-    }
-
-    await fn(mode, btn);
-  } catch (err) {
-    console.error('[PDF] Falha ao carregar módulo:', err);
-    alert('Não consegui carregar o módulo de PDF. Tente recarregar a página.');
-  }
+function setActive(route){
+  document.querySelectorAll('.sidebar a').forEach(a=>{
+    a.classList.toggle('active', a.dataset.route === route);
+  });
 }
 
-// UI: mostra/oculta campo "pagamentoOutro"
-function wirePagamentoOutro(){
-  const sel = document.getElementById('pagamento');
-  const outro = document.getElementById('pagamentoOutro');
-  if (!sel || !outro) return;
-  const sync = () => { outro.style.display = (sel.value === 'OUTRO') ? '' : 'none'; };
-  sel.addEventListener('change', sync);
-  sync();
-}
-
-// Banner offline
-function updateOfflineBanner(){
-  const el = document.getElementById('offlineBanner');
-  if (!el) return;
-  el.style.display = navigator.onLine ? 'none' : 'block';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Render inicial dos itens e listeners internos
-  initItens();
-
-  // botão adicionar item
-  const addBtn = document.getElementById('adicionarItemBtn');
-  if (addBtn){
-    addBtn.addEventListener('click', () => {
-      adicionarItem();
-      atualizarFreteUI();
+function mountNav(){
+  document.querySelectorAll('.sidebar a').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const r = a.dataset.route;
+      location.hash = r;
     });
-  }
+  });
+}
 
-  // eventos que impactam o frete
-  const end = document.getElementById('endereco');
-  const chkIsentar = document.getElementById('isentarFrete');
-  end && end.addEventListener('blur', atualizarFreteUI);
-  chkIsentar && chkIsentar.addEventListener('change', atualizarFreteUI);
+async function renderFor(ctx){
+  const route = (location.hash.replace('#','') || 'dashboard');
+  const view = routes[route] || routes.dashboard;
+  setActive(route);
+  const html = await view(ctx);
+  document.getElementById('app').innerHTML = html;
+}
 
-  // Quando qualquer item muda (qtd/preço/produto), recalcular frete
-  atualizarFreteAoEditarItem(() => atualizarFreteUI());
+function boot(){
+  mountNav();
+  requireAdmin((ctx)=>{
+    renderFor(ctx);
+    window.addEventListener('hashchange', ()=> renderFor(ctx));
+  });
+}
 
-  // pagamento outro
-  wirePagamentoOutro();
-
-  // Botões PDF (usando o import dinâmico protegido)
-  const g = document.getElementById('btnGerarPdf');
-  const s = document.getElementById('btnSalvarPdf');
-  const c = document.getElementById('btnCompartilharPdf');
-  g && g.addEventListener('click', (ev) => callGerarPDF(false, ev.target));
-  s && s.addEventListener('click', (ev) => callGerarPDF(true,  ev.target));
-  c && c.addEventListener('click', async () => callGerarPDF('share'));
-
-  // offline banner
-  updateOfflineBanner();
-  window.addEventListener('online', updateOfflineBanner);
-  window.addEventListener('offline', updateOfflineBanner);
-});
+boot();
