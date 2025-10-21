@@ -1,37 +1,35 @@
-// js/firebase.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+// js/firebase.js – usa o mesmo projeto que você passou
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import {
-  getAuth, signInAnonymously, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import {
-  getFirestore, enableIndexedDbPersistence
+  getFirestore, enableIndexedDbPersistence,
+  collection, doc, addDoc, setDoc, getDoc, getDocs,
+  query, where, orderBy, limit, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
 
-// ⚙️ Config do teu projeto (unikorapp) — igual ao arquivo que você enviou
+// ======= CONFIG DO MESMO PROJETO =======
 export const firebaseConfig = {
   apiKey: "AIzaSyC12s4PvUWtNxOlShPc7zXlzq4XWqlVo2w",
   authDomain: "unikorapp.firebaseapp.com",
   projectId: "unikorapp",
   storageBucket: "unikorapp.appspot.com",
   messagingSenderId: "329806123621",
-  appId: "1:329806123621:web:9aeff2f5947cd106cf2c8c",
+  appId: "1:329806123621:web:9aeff2f5947cd106cf2c8c"
 };
 
-export const app = initializeApp(firebaseConfig);
+// ======= INIT =======
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+export const db   = getFirestore(app);
+export const storage = getStorage(app);
 
-// 🔐 garante user para regras do Firestore
-export const authReady = new Promise((resolve) => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) resolve(user);
-    else signInAnonymously(auth).catch((e) => {
-      console.warn("Anon auth falhou:", e?.message || e);
-      resolve(null);
-    });
-  });
-});
+// Offline (IndexedDB) – idem seu padrão
+enableIndexedDbPersistence(db, { synchronizeTabs:true }).catch(()=>{});
 
-export const db = getFirestore(app);
-
-// 🌐 cache offline (não quebra se não suportar)
-try { await enableIndexedDbPersistence(db); } catch (_) {}
+// Exports utilitários (compat)
+export {
+  onAuthStateChanged,
+  collection, doc, addDoc, setDoc, getDoc, getDocs,
+  query, where, orderBy, limit, serverTimestamp
+};
