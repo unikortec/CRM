@@ -1,182 +1,35 @@
-/* Serra Nobre – Pedidos: Service Worker */
-const APP_VERSION = '3.3.1';
-const SW_VERSION  = `pedidos-v${APP_VERSION}`;
-const CACHE_NAME  = `sn-pedidos::${SW_VERSION}`;
-
-// Detecta base path a partir do escopo real do SW (/portal/app/pedidos/)
-const SCOPE_URL = new URL(self.registration.scope);
-const BASE_PATH = SCOPE_URL.pathname.endsWith('/') ? SCOPE_URL.pathname : SCOPE_URL.pathname + '/';
-const abs = (path) => new URL(path, SCOPE_URL).toString();
-
-// Lista de ativos essenciais (caminhos relativos ao diretório do app)
-const CORE_ASSETS_REL = [
-  'index.html',
-  'manifest.json',
-  'css/style.css',
-  'img/logo.png',
-
-  // JS principais (adicione/remova se necessário)
-  'js/app.js',
-  'js/ui.js',
-  'js/pdf.js',
-  'js/utils.js',
-  'js/db.js',
-  'js/state.js',
-  'js/firebase.js',
-  'js/clientes.js',
-  'js/frete.js',
-  'js/legacy-adapter.js',
-
-  // Ícones do PWA
-  'icons/icon-192.png',
-  'icons/icon-512.png',
-  'icons/apple-touch-icon.png',
-
-  // O próprio SW (útil p/ debug/atualização)
-  'sw.js'
+const CACHE = 'unikor-crm-v1';
+const ASSETS = [
+  './index.html', './manifest.json',
+  './css/style.css',
+  './js/app.js','./js/firebase.js','./js/auth.js','./js/guard.js','./js/db.js',
+  './js/views/dashboard.js','./js/views/clientes.js','./js/views/pedidos.js','./js/views/despesas.js','./js/views/ofx.js'
 ];
 
-// Converte para URLs absolutas respeitando subpasta
-const CORE_ASSETS = [ BASE_PATH, ...CORE_ASSETS_REL.map((p) => abs(p)) ];
-
-// Pré-cache (best-effort)
-async function cacheCoreAssets(cache) {
-  const reqs = CORE_ASSETS.map((u) => new Request(u, { cache: 'reload' }));
-  await Promise.allSettled(reqs.map((r) => cache.add(r)));
-}
-
-// INSTALL → precache + ativação imediata
-self.addEventListener('install', (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    await cacheCoreAssets(cache);
-    await self.skipWaiting();
-  })());
+self.addEventListener('install', (e)=> {
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', (e)=> {
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>k!==CACHE?caches.delete(k):null))));
+  self.clients.claim();
 });
 
-// ACTIVATE → limpa caches antigos + assume abas
-self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(
-      keys
-        .filter((k) => k.startsWith('sn-pedidos::') && k !== CACHE_NAME)
-        .map((k) => caches.delete(k))
-    );
-    await self.clients.claim();
-
-    // avisa janelas que novo SW está ativo
-    const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of clientsList) {
-      client.postMessage({ type: 'SW_ACTIVATED', version: SW_VERSION });
-    }
-  })());
-});
-
-// Mensagens da página
-self.addEventListener('message', (event) => {
-  const data = event.data;
-  const type = (typeof data === 'string') ? data : (data && data.type);
-  if (type === 'SKIP_WAITING') { self.skipWaiting(); return; }
-  if (type === 'PING') { event.source && event.source.postMessage({ type: 'PONG', version: SW_VERSION }); }
-});
-
-// Util: timeout de rede
-function fetchWithTimeout(req, ms = 9000, opts = {}) {
-  const ctrl = new AbortController();
-  const id = setTimeout(() => ctrl.abort('timeout'), ms);
-  return fetch(req, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
-}
-
-// Heurísticas
-function isHTMLRequest(req) {
-  if (req.mode === 'navigate') return true;
-  const accept = req.headers.get('accept') || '';
-  return accept.includes('text/html');
-}
-
-// Não cachear APIs e domínios dinâmicos (Firebase e afins)
-function isBypassCache(url) {
-  const u = new URL(url);
-  if (u.origin === self.location.origin && u.pathname.startsWith(BASE_PATH + 'api/')) return true;
-  const bypassHosts = new Set([
-    'firestore.googleapis.com',
-    'firebaseinstallations.googleapis.com',
-    'identitytoolkit.googleapis.com',
-    'securetoken.googleapis.com',
-    'storage.googleapis.com',
-    'unikorapp.appspot.com' // storage do teu projeto
-  ]);
-  return bypassHosts.has(u.host);
-}
-
-// Estáticos same-origin?
-function isStaticSameOrigin(url) {
-  const u = new URL(url);
-  if (u.origin !== self.location.origin) return false;
-  return /\.(png|jpg|jpeg|svg|webp|ico|css|js|json|woff2?)$/i.test(u.pathname);
-}
-
-// Fallback offline simples
-function offlineHTML() {
-  return new Response(
-    '<!doctype html><meta charset="utf-8"><title>Offline</title><h1>Offline</h1><p>Sem conexão e sem cache disponível.</p>',
-    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-  );
-}
-
-// Estratégias de fetch
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-
-  // Bypass
-  if (isBypassCache(req.url)) return;
-
-  // Navegação HTML → network-first com fallback
-  if (isHTMLRequest(req)) {
-    event.respondWith((async () => {
-      try {
-        const net = await fetchWithTimeout(req, 9000, { cache: 'no-store' });
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(req, net.clone());
-        return net;
-      } catch {
-        const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(req, { ignoreSearch: true }) ||
-                       await cache.match(abs('index.html')) ||
-                       await cache.match(BASE_PATH);
-        return cached || offlineHTML();
-      }
-    })());
-    return;
-  }
-
-  // Estáticos same-origin → stale-while-revalidate
-  if (isStaticSameOrigin(req.url)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req, { ignoreSearch: true });
-      const fetchAndUpdate = fetch(req).then((resp) => {
-        if (resp && resp.status === 200) cache.put(req, resp.clone());
-        return resp;
-      }).catch(() => null);
-      return cached || await fetchAndUpdate || new Response('', { status: 504 });
-    })());
-    return;
-  }
-
-  // Demais GET same-origin → network com pequeno fallback de cache
+// network-first para HTML; SWR para estáticos
+self.addEventListener('fetch', (e)=>{
+  const req = e.request;
   const url = new URL(req.url);
-  if (url.origin === self.location.origin) {
-    event.respondWith((async () => {
-      try {
-        return await fetch(req);
-      } catch {
-        const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(req, { ignoreSearch: true });
-        return cached || new Response('', { status: 504 });
-      }
-    })());
+  if (req.method !== 'GET') return;
+  if (url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/crm/')) {
+    e.respondWith(fetch(req).then(r=>{
+      const copy=r.clone(); caches.open(CACHE).then(c=>c.put(req,copy)); return r;
+    }).catch(()=>caches.match(req)));
+  } else {
+    e.respondWith(caches.match(req).then(cached=> {
+      const fetcher = fetch(req).then(r=>{
+        const copy=r.clone(); caches.open(CACHE).then(c=>c.put(req,copy)); return r;
+      }).catch(()=>cached);
+      return cached || fetcher;
+    }));
   }
 });
