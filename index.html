@@ -4,17 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>UNIKOR – CRM / Financeiro</title>
+
+  <!-- tema verde -->
   <meta name="theme-color" content="#1e7f46" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="icon" href="/assets/logo/favicon.ico" />
-  <link rel="apple-touch-icon" href="/assets/logo/unikorbranco-logo-192.png" />
+
+  <!-- MANIFEST + ICONS (caminhos que existem no seu repo /assets/) -->
+  <link rel="manifest" href="/assets/site.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+  <link rel="icon" href="/assets/favicon.ico" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
   <link rel="stylesheet" href="./css/style.css" />
   <base href="./">
 </head>
 <body>
   <header class="brandbar">
     <div class="brandbar__left">
-      <img class="brandbar__logo" src="/assets/logo/unikorbranco-logo.svg" alt="UNIKOR" />
+      <img class="brandbar__logo" src="/assets/unikor-logo.svg" alt="UNIKOR" />
       <div class="brandbar__title">CRM / Financeiro</div>
     </div>
     <div class="brandbar__right">
@@ -31,16 +38,13 @@
       <a data-route="ofx">Importar OFX</a>
     </nav>
 
-    <main id="app" class="content">
-      <!-- Conteúdo das views -->
-    </main>
+    <main id="app" class="content"></main>
   </div>
 
   <script type="module" src="./js/app.js"></script>
   <script>
-    // registra SW depois do first paint
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', ()=> {
+      window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(()=>{});
       });
     }
